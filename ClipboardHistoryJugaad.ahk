@@ -19,7 +19,6 @@
 ;  In list  :
 ;     type in search  -> filter
 ;     Enter / dbl-clk  -> paste selected item
-;     Ctrl+1..9        -> paste item #1..#9
 ;     Ctrl+C           -> copy selected item to clipboard
 ;     Ctrl+O           -> open selected folder / file / URL
 ;     Ctrl+P           -> pin / unpin selected item
@@ -982,15 +981,6 @@ Enter::PasteSelected()
 ^o::OpenSelected()
 ^p::TogglePinSelected()
 Del::DeleteSelected()
-^1::PasteNth(1)
-^2::PasteNth(2)
-^3::PasteNth(3)
-^4::PasteNth(4)
-^5::PasteNth(5)
-^6::PasteNth(6)
-^7::PasteNth(7)
-^8::PasteNth(8)
-^9::PasteNth(9)
 #HotIf
 
 ; When the search box has focus, Enter just moves focus to the list (so the
@@ -1015,15 +1005,6 @@ FocusListFromSearch() {
         return
     ItemLV.Focus()
     ItemLV.Modify(1, "Select Focus")
-}
-
-; Paste the Nth visible row directly (Ctrl+1..9).
-PasteNth(n) {
-    global Filtered, History, ItemLV
-    if (n > Filtered.Length)
-        return
-    ItemLV.Modify(n, "Select Focus")
-    PasteSelected()
 }
 
 ; ===========================================================================

@@ -78,7 +78,6 @@ Right-click the tray icon:
 | type          | live search / filter                        |
 | `Up` / `Down` | move selection                              |
 | `Enter`       | paste the selected item                     |
-| `Ctrl+1..9`   | paste item #1..#9 directly                  |
 | `Ctrl+C`      | copy selected item to clipboard (no paste)  |
 | `Ctrl+O`      | open selected folder / file / URL           |
 | `Ctrl+P`      | pin / unpin selected item                   |
