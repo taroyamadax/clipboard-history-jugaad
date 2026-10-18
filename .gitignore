@@ -1,0 +1,10 @@
+# User data (may contain sensitive clipboard content - passwords, tokens, etc.)
+history.json
+history.json.bak
+
+# Local window position/size
+window.json
+
+# Debug artifacts
+startup_debug.txt
+*.log
