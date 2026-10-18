@@ -1,5 +1,7 @@
 # Clipboard History Jugaad
 
+**English** | [日本語](README.ja.md)
+
 A small, compact clipboard-history popup written in **AutoHotkey v2**,
 inspired by the old (small-window) version of *Clipboard History Mini*.
 
@@ -48,6 +50,15 @@ hand — which is exactly what this tool is.
     ```
 
 ## Run
+
+### Prebuilt exe (recommended, no AHK install required)
+
+Download `ClipboardHistoryJugaad.exe` from [Releases](https://github.com/taroyamadax/clipboard-history-jugaad/releases) and double-click.
+
+> ⚠️ Windows SmartScreen may show a warning (unsigned exe).
+> Click "More info" → "Run anyway" to proceed.
+
+### From source
 
 Double-click `ClipboardHistoryJugaad.ahk`, or:
 

@@ -2,6 +2,9 @@
 history.json
 history.json.bak
 
+# Built exe (distributed via GitHub Releases)
+*.exe
+
 # Local window position/size
 window.json
 
