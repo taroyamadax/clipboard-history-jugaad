@@ -907,12 +907,17 @@ PasteSelected() {
 }
 
 ; Open the selected item (folder / file / url) via the shell.
+; Closes the window first (like Paste) since the user will work in the opened
+; app/folder, not continue browsing history.
 OpenSelected() {
     idx := SelectedHistoryIndex()
     if (!idx)
         return
     global History
-    OpenItem(History[idx].text)
+    if (IsOpenable(History[idx].text)) {
+        HideWindow()
+        OpenItem(History[idx].text)
+    }
 }
 
 ; Pin / unpin the selected item.
@@ -949,7 +954,7 @@ ShowItemMenu(lv, item, isRightClick, x, y) {
     m := Menu()
     ; "Open" first, only when the item is a folder / file / URL
     if (idx && IsOpenable(History[idx].text)) {
-        m.Add("Open", (*) => OpenItem(History[idx].text))
+        m.Add("Open", (*) => (HideWindow(), OpenItem(History[idx].text)))
         m.Default := "Open"                     ; double/enter-friendly default
         m.Add()
     }
