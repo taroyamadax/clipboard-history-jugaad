@@ -66,7 +66,7 @@ BuildGui()
 OnClipboardChange(ClipChanged, 1)
 Hotkey CFG.hotkey, (*) => ShowWindow()
 SetTimer(PurgeExpired, 3600000)   ; re-purge hourly (positive interval = repeating)
-TraySetIcon("shell32.dll", 135)
+TraySetIcon(A_ScriptDir "\icon.ico")
 BuildTrayMenu()
 return
 
@@ -264,6 +264,11 @@ BuildGui() {
     ; Standard resizable window with title bar (classic look).
     MainGui := Gui("+Resize", "Clipboard History Jugaad")
     MainGui.SetFont("s9", "Segoe UI")
+    
+    ; Set window icon (title bar and taskbar)
+    iconPath := A_ScriptDir "\icon.ico"
+    if FileExist(iconPath)
+        MainGui.Opt("+Icon" iconPath)
 
     ; --- Toolbar: filter buttons (left) ---
     BtnAll    := MainGui.Add("Button", "x8 y8 w50 h26", "All")
