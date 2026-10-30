@@ -10,6 +10,21 @@ inspired by the old (small-window) version of *Clipboard History Mini*.
 "Jugaad" (जुगाड़) is Hindi for a clever, make-do fix built from whatever is at
 hand — which is exactly what this tool is.
 
+## Why not just Win+V?
+
+Windows 10/11 has a built-in clipboard history (`Win+V`), but:
+
+| | Win+V | This tool |
+|---|---|---|
+| **Keyboard** | Requires Win key — awkward on HHKB, 60% boards, and compact layouts | `Ctrl+Shift+H` by default (no Win key needed, easily remappable) |
+| **Search** | No search box | Live search to filter hundreds of clips instantly |
+| **Install** | Built-in | Single `.exe` (~1 MB), no install, fully portable |
+| **Sync** | Syncs to Microsoft account (optional) | 100% local — nothing leaves your machine |
+| **Images** | ✅ Supported | ❌ Text-only (use Win+V for images) |
+
+If you're on a compact keyboard without a convenient Win key, or you just want
+faster search and offline-only history, this tool is for you.
+
 ## Features
 
 - Compact window (720 x 420 by default) with a classic native Windows look
