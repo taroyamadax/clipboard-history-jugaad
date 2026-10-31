@@ -263,14 +263,8 @@ BuildGui() {
 
     ; Standard resizable window with title bar (classic look).
     MainGui := Gui("+Resize", "Clipboard History Jugaad")
-    ; Set window icon (title bar + taskbar) via WM_SETICON
-    iconPath := A_ScriptDir "\icon.ico"
-    if FileExist(iconPath) {
-        hIcon := LoadPicture(iconPath, "w32 h32 Icon1", &imgType)
-        hIconSmall := LoadPicture(iconPath, "w16 h16 Icon1", &imgType2)
-        SendMessage(0x80, 1, hIcon, MainGui)      ; WM_SETICON, ICON_BIG
-        SendMessage(0x80, 0, hIconSmall, MainGui) ; WM_SETICON, ICON_SMALL
-    }
+    ; NOTE: Window icon is set in SetWindowIcon() AFTER MainGui.Show(),
+    ; because AHK v2's Gui() delays HWND creation until Show() is called.
     MainGui.SetFont("s9", "Segoe UI")
 
     ; --- Toolbar: filter buttons (left) ---
@@ -316,6 +310,19 @@ BuildGui() {
     MainGui.OnEvent("Size",   GuiResized)
 
     SetActiveButton()
+}
+
+; Set title bar + taskbar icon. Must be called AFTER MainGui.Show() because
+; AHK v2's Gui() delays HWND creation until Show() is called.
+SetWindowIcon() {
+    global MainGui
+    iconPath := A_ScriptDir "\icon.ico"
+    if !FileExist(iconPath)
+        return
+    hIcon := LoadPicture(iconPath, "w32 h32 Icon1", &imgType)
+    hIconSmall := LoadPicture(iconPath, "w16 h16 Icon1", &imgType2)
+    SendMessage(0x80, 1, hIcon, MainGui)      ; WM_SETICON, ICON_BIG (taskbar)
+    SendMessage(0x80, 0, hIconSmall, MainGui) ; WM_SETICON, ICON_SMALL (title bar)
 }
 
 ; Save window position, then hide (called on Esc / close box).
@@ -507,6 +514,7 @@ ShowWindow() {
     }
 
     MainGui.Show(Format("x{1} y{2} w{3} h{4}", px, py, w, h))
+    SetWindowIcon()   ; must be AFTER Show() - HWND exists now
     SearchEdit.Focus()
 }
 
