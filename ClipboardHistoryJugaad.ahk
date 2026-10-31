@@ -263,6 +263,14 @@ BuildGui() {
 
     ; Standard resizable window with title bar (classic look).
     MainGui := Gui("+Resize", "Clipboard History Jugaad")
+    ; Set window icon (title bar + taskbar) via WM_SETICON
+    iconPath := A_ScriptDir "\icon.ico"
+    if FileExist(iconPath) {
+        hIcon := LoadPicture(iconPath, "w32 h32 Icon1", &imgType)
+        hIconSmall := LoadPicture(iconPath, "w16 h16 Icon1", &imgType2)
+        SendMessage(0x80, 1, hIcon, MainGui)      ; WM_SETICON, ICON_BIG
+        SendMessage(0x80, 0, hIconSmall, MainGui) ; WM_SETICON, ICON_SMALL
+    }
     MainGui.SetFont("s9", "Segoe UI")
 
     ; --- Toolbar: filter buttons (left) ---
