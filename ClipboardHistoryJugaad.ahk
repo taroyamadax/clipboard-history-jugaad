@@ -314,13 +314,19 @@ BuildGui() {
 
 ; Set title bar + taskbar icon. Must be called AFTER MainGui.Show() because
 ; AHK v2's Gui() delays HWND creation until Show() is called.
+; NOTE: We use LoadImage API instead of LoadPicture because LoadPicture returns
+; HBITMAP (type 1) for ICO files, but WM_SETICON requires HICON handles.
+; LoadPicture works for title bar (AHK converts internally) but NOT for taskbar.
 SetWindowIcon() {
     global MainGui
     iconPath := A_ScriptDir "\icon.ico"
     if !FileExist(iconPath)
         return
-    hIcon := LoadPicture(iconPath, "w32 h32 Icon1", &imgType)
-    hIconSmall := LoadPicture(iconPath, "w16 h16 Icon1", &imgType2)
+    ; LoadImage API: IMAGE_ICON=1, LR_LOADFROMFILE=0x10
+    hIcon := DllCall("LoadImage", "ptr", 0, "str", iconPath, "uint", 1, "int", 32, "int", 32, "uint", 0x10, "ptr")
+    hIconSmall := DllCall("LoadImage", "ptr", 0, "str", iconPath, "uint", 1, "int", 16, "int", 16, "uint", 0x10, "ptr")
+    if (hIcon = 0)
+        return
     SendMessage(0x80, 1, hIcon, MainGui)      ; WM_SETICON, ICON_BIG (taskbar)
     SendMessage(0x80, 0, hIconSmall, MainGui) ; WM_SETICON, ICON_SMALL (title bar)
 }
