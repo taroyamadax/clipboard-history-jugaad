@@ -127,13 +127,15 @@ ToggleStartup() {
         TrayTip("Clipboard History Jugaad", "Removed from startup.", 1)
     } else {
         try {
-            ; AHK v2's own exe (A_AhkPath) launches this script at login.
+            ; Use the compiled .exe directly (not A_AhkPath + .ahk args).
+            ; This ensures the taskbar icon shows the custom icon, not AHK's green H.
             ; Args: Target, LinkFile, WorkingDir, Args, Description
+            exePath := A_ScriptDir "\ClipboardHistoryJugaad.exe"
             FileCreateShortcut(
-                A_AhkPath,                           ; target  : AutoHotkey64.exe
+                exePath,                             ; target  : the compiled exe
                 lnk,                                 ; .lnk path
                 A_ScriptDir,                         ; working dir
-                '"' A_ScriptFullPath '"',            ; args    : the script, quoted
+                "",                                  ; args    : none needed
                 "Clipboard History Jugaad",            ; description
             )
             TrayTip("Clipboard History Jugaad", "Added to startup.", 1)
