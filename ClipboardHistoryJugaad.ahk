@@ -44,7 +44,8 @@ global CFG := {
     expireHours: 24,               ; non-pinned items older than this are auto-deleted
     purgeOnStartup: true,          ; purge expired items at startup (and hourly thereafter)
     saveFile:    A_ScriptDir "\history.json",
-    winStateFile: A_ScriptDir "\window.json"
+    winStateFile: A_ScriptDir "\window.json",
+    configFile:  A_ScriptDir "\config.json"   ; user settings (rememberPos, expireHours, purgeOnStartup)
 }
 
 ; ---------------------------------------------------------------------------
@@ -55,11 +56,12 @@ global g_IgnoreClip := false      ; self-fire guard: skip OnClipboardChange whil
 global Filtered  := []            ; indices into History shown now
 global ActiveTab := "All"         ; All | Text | Folder | File
 global MainGui, SearchEdit, ItemLV, StatusText
-global BtnAll, BtnText, BtnFolder, BtnFile, BtnStats, BtnSettings, BtnClear
+global BtnAll, BtnText, BtnFolder, BtnFile, BtnSettings, BtnSaveSize, BtnClear
 
 ; ---------------------------------------------------------------------------
 ;  Startup
 ; ---------------------------------------------------------------------------
+LoadConfig()                      ; load user settings from config.json (before LoadHistory)
 LoadHistory()
 PurgeExpired()                    ; drop non-pinned items older than CFG.expireHours
 TraySetIcon(A_ScriptDir "\icon.ico")  ; Set icon BEFORE BuildGui (GUI uses tray icon at creation time)
@@ -261,7 +263,7 @@ PurgeExpired() {
 ; ===========================================================================
 BuildGui() {
     global MainGui, SearchEdit, ItemLV, StatusText, CFG
-    global BtnAll, BtnText, BtnFolder, BtnFile, BtnStats, BtnSettings, BtnClear
+    global BtnAll, BtnText, BtnFolder, BtnFile, BtnSettings, BtnSaveSize, BtnClear
 
     ; Standard resizable window with title bar (classic look).
     MainGui := Gui("+Resize", "Clipboard History Jugaad")
@@ -299,12 +301,12 @@ BuildGui() {
     ItemLV.ModifyCol(4, 70)       ; Time
 
     ; --- Status bar (bottom) ---
-    BtnStats    := MainGui.Add("Button", "x8 y" (CFG.winH - 34) " w60 h24", "Stats")
-    BtnSettings := MainGui.Add("Button", "x+4 yp w80 h24", "Save Size")
+    BtnSettings := MainGui.Add("Button", "x8 y" (CFG.winH - 34) " w70 h24", "Settings")
+    BtnSaveSize := MainGui.Add("Button", "x+4 yp w80 h24", "Save Size")
     StatusText  := MainGui.Add("Text", "x+10 yp+4 w200 h18 Center", "0 items")
     BtnClear    := MainGui.Add("Button", "x" (CFG.winW - 108) " y" (CFG.winH - 34) " w100 h24", "Clear History")
-    BtnStats.OnEvent("Click",    (*) => ShowStats())
-    BtnSettings.OnEvent("Click", (*) => SaveCurrentSize())
+    BtnSettings.OnEvent("Click", (*) => ShowSettings())
+    BtnSaveSize.OnEvent("Click", (*) => SaveCurrentSize())
     BtnClear.OnEvent("Click",    (*) => ClearHistory())
 
     MainGui.OnEvent("Escape", (*) => HideWindow())
@@ -408,7 +410,7 @@ ReadNum(raw, key) {
 
 ; Re-flow controls when the window is resized.
 GuiResized(thisGui, minMax, w, h) {
-    global SearchEdit, ItemLV, StatusText, BtnStats, BtnSettings, BtnClear
+    global SearchEdit, ItemLV, StatusText, BtnSettings, BtnSaveSize, BtnClear
     if (minMax = -1)
         return
     ; search box stretches to the right edge of the toolbar
@@ -420,9 +422,9 @@ GuiResized(thisGui, minMax, w, h) {
     FitContentCol(w)
     ; bottom bar follows the bottom edge
     by := h - 34
-    BtnStats.Move(8, by)
-    BtnSettings.Move(74, by)
-    StatusText.Move(150, by + 4, w - 150 - 116)
+    BtnSettings.Move(8, by)
+    BtnSaveSize.Move(82, by)
+    StatusText.Move(170, by + 4, w - 170 - 116)
     BtnClear.Move(w - 108, by)
 }
 
@@ -1037,20 +1039,122 @@ FocusListFromSearch() {
 }
 
 ; ===========================================================================
-;  Stats / Settings / Clear
+;  Settings dialog (replaces old Stats dialog)
 ; ===========================================================================
 
-ShowStats() {
-    global History
-    total := History.Length
-    pinned := 0, chars := 0
-    for it in History {
-        chars += StrLen(it.text)
-        if (it.pinned)
-            pinned++
+ShowSettings() {
+    global CFG, MainGui
+    
+    ; --- Settings GUI (modal, owned by main window) ---
+    sg := Gui("+Owner" MainGui.Hwnd " +ToolWindow", "Settings")
+    sg.SetFont("s9", "Segoe UI")
+    
+    ; rememberPos checkbox
+    sg.Add("CheckBox", "vRememberPos Checked" (CFG.rememberPos ? "1" : "0"), "Remember window position")
+    
+    ; purgeOnStartup checkbox
+    chkPurge := sg.Add("CheckBox", "vPurgeOnStartup xm y+10 Checked" (CFG.purgeOnStartup ? "1" : "0"), "Auto-purge expired items")
+    
+    ; expireDays (disabled when purge is OFF) - stored as hours internally (days * 24)
+    lblExpire := sg.Add("Text", "xm y+15", "Expire after (non-pinned items):")
+    editExpire := sg.Add("Edit", "vExpireDays x+5 yp-3 w50 Number", CFG.expireHours // 24)
+    lblDays := sg.Add("Text", "x+5 yp+3", "day(s)")
+    
+    ; Initial state: disable if purge is OFF
+    if (!CFG.purgeOnStartup) {
+        lblExpire.Enabled := false
+        editExpire.Enabled := false
+        lblDays.Enabled := false
     }
-    MsgBox(Format("Items : {1}`nPinned: {2}`nChars : {3}", total, pinned, chars)
-        , "Clipboard History - Stats", 0x40)
+    
+    ; Toggle expireDays enabled/disabled based on checkbox
+    chkPurge.OnEvent("Click", (*) => (
+        lblExpire.Enabled := chkPurge.Value,
+        editExpire.Enabled := chkPurge.Value,
+        lblDays.Enabled := chkPurge.Value
+    ))
+    
+    ; Buttons
+    sg.Add("Button", "xm y+20 w80 Default", "Save").OnEvent("Click", (*) => SaveSettingsAndClose(sg))
+    sg.Add("Button", "x+10 yp w80", "Cancel").OnEvent("Click", (*) => sg.Destroy())
+    
+    sg.OnEvent("Escape", (*) => sg.Destroy())
+    sg.OnEvent("Close", (*) => sg.Destroy())
+    
+    ; Show centered on the main window (important for multi-monitor setups)
+    MainGui.GetPos(&mx, &my, &mw, &mh)
+    sg.Show("Hide")  ; create window to get its size
+    sg.GetPos(, , &sw, &sh)
+    sx := mx + (mw - sw) // 2
+    sy := my + (mh - sh) // 2
+    sg.Show(Format("x{1} y{2}", sx, sy))
+}
+
+; Save settings from the dialog and close it.
+SaveSettingsAndClose(sg) {
+    global CFG
+    saved := sg.Submit()
+    
+    ; Validate expireDays (minimum 1 day, max 365 days)
+    expDays := saved.ExpireDays + 0
+    if (expDays < 1)
+        expDays := 1
+    if (expDays > 365)
+        expDays := 365
+    
+    ; Apply to CFG (convert days to hours for internal storage)
+    CFG.rememberPos := saved.RememberPos ? true : false
+    CFG.purgeOnStartup := saved.PurgeOnStartup ? true : false
+    CFG.expireHours := expDays * 24
+    
+    ; Persist to config.json
+    SaveConfig()
+    
+    ToolTip("Settings saved")
+    SetTimer(() => ToolTip(), -1500)
+}
+
+; ===========================================================================
+;  Config persistence (config.json)
+; ===========================================================================
+
+; Save user-configurable settings to config.json.
+SaveConfig() {
+    global CFG
+    try {
+        json := Format('{{"rememberPos":{1},"expireHours":{2},"purgeOnStartup":{3}}}'
+            , CFG.rememberPos ? "true" : "false"
+            , CFG.expireHours
+            , CFG.purgeOnStartup ? "true" : "false")
+        try FileDelete(CFG.configFile)
+        FileAppend(json, CFG.configFile, "UTF-8")
+    }
+}
+
+; Load user-configurable settings from config.json (called at startup).
+LoadConfig() {
+    global CFG
+    if !FileExist(CFG.configFile)
+        return
+    try raw := FileRead(CFG.configFile, "UTF-8")
+    catch
+        return
+    
+    ; Parse rememberPos
+    if (InStr(raw, '"rememberPos":true'))
+        CFG.rememberPos := true
+    else if (InStr(raw, '"rememberPos":false'))
+        CFG.rememberPos := false
+    
+    ; Parse purgeOnStartup
+    if (InStr(raw, '"purgeOnStartup":true'))
+        CFG.purgeOnStartup := true
+    else if (InStr(raw, '"purgeOnStartup":false'))
+        CFG.purgeOnStartup := false
+    
+    ; Parse expireHours
+    if (RegExMatch(raw, '"expireHours"\s*:\s*(\d+)', &m))
+        CFG.expireHours := m[1] + 0
 }
 
 ClearHistory() {

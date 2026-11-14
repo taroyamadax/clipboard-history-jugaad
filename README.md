@@ -7,6 +7,8 @@ inspired by the old (small-window) version of *Clipboard History Mini*.
 
 ![Screenshot](screenshot.png)
 
+![Settings](screenshot-settings.png)
+
 "Jugaad" (जुगाड़) is Hindi for a clever, make-do fix built from whatever is at
 hand — which is exactly what this tool is.
 
@@ -46,8 +48,12 @@ faster search and offline-only history, this tool is for you.
 - **Open** launches the shell: folders in Explorer, files in their default
   app, URLs in the default browser
 - History persisted to `history.json` next to the script
-- **Auto-expiry**: non-pinned items older than 24 h are deleted at startup
-  and hourly thereafter (pinned items are kept forever)
+- **Auto-expiry**: non-pinned items older than 1 day (configurable) are deleted
+  at startup and hourly thereafter (pinned items are kept forever)
+- **Settings** button to configure options without editing the script:
+  - Remember window position (on/off)
+  - Auto-purge expired items (on/off)
+  - Expiry period in days
 - Tray menu toggle to **run at startup** (Windows login)
 - **Save Size** button to persist window size (position auto-saved on close)
 
@@ -144,6 +150,11 @@ Edit the `CFG` object at the top of `ClipboardHistoryJugaad.ahk`:
 | `purgeOnStartup` | enable auto-expiry (startup + hourly) | `true`   |
 | `saveFile`    | history JSON path                    | script dir |
 | `winStateFile`| window size/position JSON path       | script dir |
+| `configFile`  | user settings JSON path              | script dir |
+
+The three settings `rememberPos`, `expireHours`, and `purgeOnStartup` can also
+be changed via the **Settings** button in the UI — no need to edit the script.
+Changed values are saved to `config.json`.
 
 ## Type auto-detection
 
@@ -180,7 +191,7 @@ To stop the history growing without bound, non-pinned items older than
   tray instance keeps itself tidy even if the PC is never restarted).
 - **What survives**: pinned items are never deleted regardless of age. Items
   with a blank timestamp are also kept (their age can't be judged).
-- **Measure**: strictly 24 h of elapsed time (not a calendar-day boundary) —
-  an item copied at 09:00 expires at 09:00 the next day.
+- **Measure**: elapsed time based on the configured expiry period — an item
+  copied at 09:00 expires at 09:00 after the set number of days.
 - **Disable**: set `purgeOnStartup: false` in the `CFG` block (no code
   removal needed); tune the lifetime with `expireHours`.
