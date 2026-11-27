@@ -2,6 +2,9 @@
 history.json
 history.json.bak
 
+# User settings (local preferences - expireHours, rememberPos, etc.)
+config.json
+
 # Built exe (distributed via GitHub Releases)
 *.exe
 

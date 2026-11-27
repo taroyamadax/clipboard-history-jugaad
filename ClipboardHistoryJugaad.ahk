@@ -589,8 +589,10 @@ SaveHistory() {
     global History, CFG
     parts := []
     for it in History {
-        parts.Push(Format('{{"text":{1},"time":"{2}","pinned":{3}}}'
-            , JsonStr(it.text), it.time, it.pinned ? "true" : "false"))
+        ; Use string concatenation instead of Format() to avoid {{ double-brace issue
+        ; Format()'s {{ does NOT escape to { in AHK v2 - it outputs {{ literally!
+        pinnedStr := it.pinned ? "true" : "false"
+        parts.Push('{"text":' . JsonStr(it.text) . ',"time":"' . it.time . '","pinned":' . pinnedStr . '}')
     }
     json := "[" JoinArr(parts, ",") "]"
     try FileDelete(CFG.saveFile)
@@ -1122,10 +1124,10 @@ SaveSettingsAndClose(sg) {
 SaveConfig() {
     global CFG
     try {
-        json := Format('{{"rememberPos":{1},"expireHours":{2},"purgeOnStartup":{3}}}'
-            , CFG.rememberPos ? "true" : "false"
-            , CFG.expireHours
-            , CFG.purgeOnStartup ? "true" : "false")
+        ; Use string concatenation instead of Format() to avoid {{ double-brace issue
+        rememberStr := CFG.rememberPos ? "true" : "false"
+        purgeStr := CFG.purgeOnStartup ? "true" : "false"
+        json := '{"rememberPos":' . rememberStr . ',"expireHours":' . CFG.expireHours . ',"purgeOnStartup":' . purgeStr . '}'
         try FileDelete(CFG.configFile)
         FileAppend(json, CFG.configFile, "UTF-8")
     }
